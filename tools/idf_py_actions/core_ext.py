@@ -262,6 +262,12 @@ def action_extensions(base_actions, project_path):
                 'hidden': True,
                 'default': False,
             },
+            {
+                'names': ['--mcuboot'],
+                'help': "Build and format application for MCUBoot.",
+                'is_flag': True,
+                'default': False,
+            },
         ],
         'global_action_callbacks': [validate_root_options],
     }

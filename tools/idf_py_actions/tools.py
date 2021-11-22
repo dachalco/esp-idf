@@ -206,6 +206,10 @@ def ensure_build_directory(args, prog_name, always_run_cmake=False):
 
             if args.define_cache_entry:
                 cmake_args += ['-D' + d for d in args.define_cache_entry]
+
+            if args.mcuboot:
+                cmake_args += ['-DMCUBOOT_IMAGE=1']
+
             cmake_args += [project_dir]
 
             run_tool('cmake', cmake_args, cwd=args.build_dir)

@@ -44,8 +44,19 @@ else()
 
     # Process the template file through the linker script generation mechanism, and use the output for linking the
     # final binary
-    target_linker_script(${COMPONENT_LIB} INTERFACE "${CMAKE_CURRENT_LIST_DIR}/ld/esp32.project.ld.in"
-                        PROCESS "${CMAKE_CURRENT_BINARY_DIR}/ld/esp32.project.ld")
+    set(LD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ld)
+    if( MCUBOOT_IMAGE )
+        message( STATUS "Formatting application image for esp-mcuboot" )
+        target_linker_script(${COMPONENT_LIB} INTERFACE "${CMAKE_CURRENT_LIST_DIR}/ld/esp32.mcuboot.project.ld.in"
+        PROCESS "${CMAKE_CURRENT_BINARY_DIR}/ld/esp32.project.ld")
+
+        set( ESP32_LD ${LD_DIR}/esp32.mcuboot.ld)
+    else()
+        target_linker_script(${COMPONENT_LIB} INTERFACE "${CMAKE_CURRENT_LIST_DIR}/ld/esp32.project.ld.in"
+        PROCESS "${CMAKE_CURRENT_BINARY_DIR}/ld/esp32.project.ld")
+
+        set( ESP32_LD ${LD_DIR}/esp32.ld)
+    endif()
 
     target_linker_script(${COMPONENT_LIB} INTERFACE "ld/esp32.peripherals.ld")
     target_link_libraries(${COMPONENT_LIB} PUBLIC gcc)
@@ -53,11 +64,10 @@ else()
 
     idf_build_get_property(config_dir CONFIG_DIR)
     # Preprocess esp32.ld linker script to include configuration, becomes esp32_out.ld
-    set(LD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ld)
     add_custom_command(
         OUTPUT esp32_out.ld
-        COMMAND "${CMAKE_C_COMPILER}" -C -P -x c -E -o esp32_out.ld -I ${config_dir} ${LD_DIR}/esp32.ld
-        MAIN_DEPENDENCY ${LD_DIR}/esp32.ld ${sdkconfig_header}
+        COMMAND "${CMAKE_C_COMPILER}" -C -P -x c -E -o esp32_out.ld -I ${config_dir} ${ESP32_LD}
+        MAIN_DEPENDENCY ${ESP32_LD} ${sdkconfig_header}
         COMMENT "Generating linker script..."
         VERBATIM)
 

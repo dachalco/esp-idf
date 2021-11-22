@@ -89,6 +89,17 @@ if(CONFIG_APP_BUILD_GENERATE_BINARIES)
         COMMENT "Generating binary image from built executable"
         )
     add_custom_target(gen_project_binary DEPENDS "${build_dir}/.bin_timestamp")
+
+    add_custom_command(OUTPUT "${build_dir}/.mcuboot_bin_timestamp"
+        COMMAND xtensa-esp32-elf-objcopy -O binary ${elf_dir}/${elf} ${build_dir}/${unsigned_project_binary}
+        COMMAND ${CMAKE_COMMAND} -E echo "Generated ${build_dir}/${unsigned_project_binary}"
+        COMMAND ${CMAKE_COMMAND} -E md5sum "${build_dir}/${unsigned_project_binary}" > "${build_dir}/.mcuboot_bin_timestamp"
+        DEPENDS ${elf}
+        VERBATIM
+        WORKING_DIRECTORY ${build_dir}
+        COMMENT "Generating binary image from build executable"
+    )
+    add_custom_target(gen_mcuboot_project_binary DEPENDS "${build_dir}/.mcuboot_bin_timestamp")
 endif()
 
 set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -97,7 +108,12 @@ set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
 
 if(CONFIG_APP_BUILD_GENERATE_BINARIES)
-    add_custom_target(app ALL DEPENDS gen_project_binary)
+    if( MCUBOOT_IMAGE )
+        add_custom_target(app ALL DEPENDS gen_mcuboot_project_binary)
+    else()
+        add_custom_target(app ALL DEPENDS gen_project_binary)
+    endif()
+
 endif()
 
 if(CONFIG_SECURE_SIGNED_APPS_ECDSA_SCHEME)
